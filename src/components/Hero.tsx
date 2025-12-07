@@ -1,83 +1,126 @@
 import { Github, Linkedin, Mail } from "lucide-react";
-
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { useTheme } from "next-themes";
 const Hero = () => {
+  const sceneRef = useRef<HTMLDivElement>(null);
+
+  const {theme} = useTheme();
+  useEffect(() => {
+    if (!sceneRef.current) return;
+    
+
+    const isDark = theme === "dark";
+    console.log(isDark);
+
+    // Scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(isDark ? 0x0a0a0a : 0xffffff);
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      sceneRef.current.clientWidth / sceneRef.current.clientHeight,
+      0.1,
+      1000
+    );
+    camera.position.z = 5;
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(
+      sceneRef.current.clientWidth,
+      sceneRef.current.clientHeight
+    );
+    renderer.setPixelRatio(window.devicePixelRatio);
+    sceneRef.current.appendChild(renderer.domElement);
+
+    // Accent neon green color
+    const NEON = 0x00ff66;
+
+    // Wireframe Icosahedron
+    const geometry = new THREE.IcosahedronGeometry(1.6, 1);
+    const material = new THREE.MeshBasicMaterial({
+      color: NEON,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.9,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    // Glow Light
+    const pointLight = new THREE.PointLight(NEON, 2.2, 40);
+    pointLight.position.set(2, 2, 4);
+    scene.add(pointLight);
+
+    // Soft ambient light
+    const ambient = new THREE.AmbientLight(NEON, 0.15);
+    scene.add(ambient);
+
+    // Controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.enableZoom = false;
+
+    // Animation Loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+
+      mesh.rotation.x += 0.004;
+      mesh.rotation.y += 0.005;
+
+      controls.update();
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      if (!sceneRef.current) return;
+      const width = sceneRef.current.clientWidth;
+      const height = sceneRef.current.clientHeight;
+
+      renderer.setSize(width, height);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      renderer.dispose();
+      sceneRef.current?.removeChild(renderer.domElement);
+    };
+  }, [theme]);
+
   return (
-    <section id="home" className="min-h-screen flex items-center justify-center pt-20 px-6">
+    <section
+      id="home"
+      className="min-h-screen flex items-center justify-center pt-20 px-6"
+    >
       <div className="container mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Text Content */}
-          <div className="space-y-6 animate-fade-in">
-            <div className="space-y-2">
-              <p className="text-muted-foreground text-lg">Hello I am</p>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold">
-                <span className="neon-text">&lt;</span> John{" "}
-                <span className="text-foreground">Doe</span>{" "}
-                <span className="neon-text">/&gt;</span>
-              </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground">
-                Fullstack Developer
-              </p>
-            </div>
 
-            {/* Tech Icons */}
-            <div className="flex gap-4 flex-wrap items-center pt-4">
-              <span className="text-muted-foreground">Tech Stack:</span>
-              <div className="flex gap-3">
-                <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center hover-glow">
-                  <span className="text-xl">⚛️</span>
-                </div>
-                <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center hover-glow">
-                  <span className="text-xl">🎨</span>
-                </div>
-                <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center hover-glow">
-                  <span className="text-xl">⚙️</span>
-                </div>
-              </div>
-            </div>
+          {/* TEXT SECTION */}
+          <div className="space-y-6">
+            <p className="text-muted-foreground text-lg">Hello I am</p>
+            <h1 className="text-6xl font-bold">John Doe</h1>
+            <p className="text-2xl text-muted-foreground">
+              Fullstack Developer
+            </p>
 
-            {/* Social Links */}
+            {/* Socials */}
             <div className="flex gap-4 pt-4">
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300 hover-glow"
-                aria-label="GitHub"
-              >
-                <Github size={20} />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300 hover-glow"
-                aria-label="LinkedIn"
-              >
-                <Linkedin size={20} />
-              </a>
-              <a
-                href="mailto:john@example.com"
-                className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300 hover-glow"
-                aria-label="Email"
-              >
-                <Mail size={20} />
-              </a>
+              <Github className="cursor-pointer hover:text-green-400" />
+              <Linkedin className="cursor-pointer hover:text-green-400" />
+              <Mail className="cursor-pointer hover:text-green-400" />
             </div>
           </div>
 
-          {/* Profile Image */}
-          <div className="flex justify-center md:justify-end animate-scale-in">
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl"></div>
-              <div className="relative w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden border-4 neon-border">
-                <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
-                  alt="John Doe - Fullstack Developer"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-          </div>
+          {/* THREE.JS SCENE */}
+          <div ref={sceneRef} className="w-full h-[500px]"></div>
         </div>
       </div>
     </section>
